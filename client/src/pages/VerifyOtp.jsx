@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { KeyRound, RotateCw, ArrowLeft, Mail, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -11,11 +11,12 @@ import Card from '../components/common/Card';
 
 const VerifyOtp = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
-  const emailParam = searchParams.get('email') || '';
+  const emailParam = searchParams.get('email') || location.state?.email || '';
   const [email, setEmail] = useState(emailParam);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -25,6 +26,13 @@ const VerifyOtp = () => {
   const [verifiedSuccess, setVerifiedSuccess] = useState(false);
 
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    const currentEmail = searchParams.get('email') || location.state?.email || '';
+    if (currentEmail) {
+      setEmail(currentEmail);
+    }
+  }, [searchParams, location.state]);
 
   useEffect(() => {
     if (inputRefs.current[0]) {

@@ -92,15 +92,23 @@ const Signup = () => {
 
     setLoading(true);
     try {
+      // Clear any stale previous session before registering a new user
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      const targetEmail = formData.email.trim().toLowerCase();
+
       const res = await api.post('/auth/signup', {
         fullName: formData.fullName.trim(),
-        email: formData.email.trim().toLowerCase(),
+        email: targetEmail,
         password: formData.password,
       });
 
-      if (res.data?.success) {
-        toast.success(res.data.message || 'Verification code sent to your email!');
-        navigate(`/verify-otp?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
+      if (res.status === 201 || res.data?.success) {
+        toast.success(res.data?.message || 'Verification code sent to your email!');
+        navigate(`/verify-otp?email=${encodeURIComponent(targetEmail)}`, {
+          state: { email: targetEmail },
+        });
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to create account. Please try again.';

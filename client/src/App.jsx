@@ -68,14 +68,7 @@ function App() {
                 </PublicRoute>
               }
             />
-            <Route
-              path="verify-otp"
-              element={
-                <PublicRoute>
-                  <VerifyOtp />
-                </PublicRoute>
-              }
-            />
+            <Route path="verify-otp" element={<VerifyOtp />} />
             <Route
               path="login"
               element={

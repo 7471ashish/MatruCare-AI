@@ -1,3 +1,4 @@
+const dns = require('dns');
 const mongoose = require('mongoose');
 const config = require('./env');
 
@@ -12,11 +13,24 @@ const connectDB = async (customUri) => {
     const conn = await mongoose.connect(uri, {
       autoIndex: true,
     });
-    console.log(`[Database] MongoDB connected: ${conn.connection.host}`);
+    console.log(`[Database] MongoDB connected: ${conn.connection.host} (${conn.connection.name})`);
     return conn;
   } catch (error) {
+    // Handle Windows/ISP DNS SRV resolution issue (querySrv ECONNREFUSED)
+    if (uri.startsWith('mongodb+srv://') && error.message.includes('querySrv')) {
+      console.warn('[Database] Local DNS failed on SRV lookup. Retrying with Google/Cloudflare DNS...');
+      try {
+        dns.setServers(['8.8.8.8', '1.1.1.1']);
+        const conn = await mongoose.connect(uri, { autoIndex: true });
+        console.log(`[Database] MongoDB connected via fallback DNS: ${conn.connection.host} (${conn.connection.name})`);
+        return conn;
+      } catch (retryError) {
+        console.error(`[Database Error] Connection failed after DNS retry: ${retryError.message}`);
+        throw retryError;
+      }
+    }
+
     console.error(`[Database Error] Connection failed: ${error.message}`);
-    // If not in test environment, allow caller to handle or rethrow
     throw error;
   }
 };
@@ -38,4 +52,3 @@ module.exports = {
   connectDB,
   disconnectDB,
 };
-
