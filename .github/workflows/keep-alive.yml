@@ -1,0 +1,26 @@
+name: Keep Render Backend Alive
+
+on:
+  schedule:
+    # Runs every 14 minutes (Render free tier sleeps after 15 minutes of inactivity)
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-Alive Ping
+        run: |
+          URL="${{ secrets.RENDER_BACKEND_URL }}"
+          if [ -z "$URL" ]; then
+            URL="https://matrucare-backend.onrender.com/health"
+          fi
+          echo "Pinging backend at: $URL"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          echo "Received HTTP status code: $STATUS"
+          if [ "$STATUS" -eq 200 ]; then
+            echo "Success! Render backend is alive and healthy."
+          else
+            echo "Warning: Response code $STATUS (server might be waking up)."
+          fi
